@@ -19,7 +19,7 @@ services:
     build: ./mimic-web
     restart: unless-stopped
     ports:
-      - "8080:5000"
+      - "8081:5000"
     environment:
       - REDIS_HOST=redis
     depends_on: [redis]
