@@ -1,0 +1,52 @@
+services:
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    networks: [deception]
+
+  cowrie:
+    image: cowrie/cowrie:latest
+    restart: unless-stopped
+    ports:
+      - "2222:2222"
+      - "2223:2223"
+    volumes:
+      - ./cowrie/etc:/cowrie/cowrie-git/etc:ro
+      - ./logs/cowrie:/cowrie/cowrie-git/var/log/cowrie
+    networks: [deception]
+
+  mimic-web:
+    build: ./mimic-web
+    restart: unless-stopped
+    ports:
+      - "8080:5000"
+    environment:
+      - REDIS_HOST=redis
+    depends_on: [redis]
+    networks: [deception]
+
+  logger:
+    build: ./logger
+    restart: unless-stopped
+    volumes:
+      - ./logs:/logs
+      - ./logs/cowrie:/cowrie-logs:ro
+    environment:
+      - REDIS_HOST=redis
+      - COWRIE_LOG=/cowrie-logs/cowrie.json
+    depends_on: [redis]
+    networks: [deception]
+
+  dashboard:
+    build: ./dashboard
+    restart: unless-stopped
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./logs:/logs:ro
+    depends_on: [logger]
+    networks: [deception]
+
+networks:
+  deception:
+    driver: bridge
